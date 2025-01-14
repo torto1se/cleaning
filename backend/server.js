@@ -6,13 +6,13 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = 3001; // Порт для сервера
+const port = 3001; 
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Подключение к базе данных SQLite
+// Подключение к базе данных
 const db = new sqlite3.Database('./database.db', (err) => {
     if (err) {
         console.error(err.message);
@@ -20,7 +20,7 @@ const db = new sqlite3.Database('./database.db', (err) => {
     console.log('Подключено к базе данных SQLite.');
 });
 
-// Создание таблицы пользователей, если она не существует
+// Создание таблиц, если они не существуют
 db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -30,17 +30,27 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL
 )`);
 
+db.run(`CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER,
+    service TEXT NOT NULL,
+    address TEXT NOT NULL,
+    contact TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    paymentMethod TEXT NOT NULL,
+    FOREIGN KEY(userId) REFERENCES users(id)
+)`);
+
 // Регистрация пользователя
 app.post('/register', (req, res) => {
     const { username, fullname, phone, email, password } = req.body;
-    
-    // Хеширование пароля
+
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
 
-        // Вставка нового пользователя в базу данных
         db.run(`INSERT INTO users (username, fullname, phone, email, password) VALUES (?, ?, ?, ?, ?)`, 
             [username, fullname, phone, email, hash], 
             function(err) {
@@ -62,15 +72,62 @@ app.post('/login', (req, res) => {
             return res.status(401).json({ message: 'Неверный логин или пароль' });
         }
 
-        // Проверка пароля
         bcrypt.compare(password, user.password, (err, match) => {
             if (!match) {
                 return res.status(401).json({ message: 'Неверный логин или пароль' });
             }
 
-            // Генерация JWT токена
             const token = jwt.sign({ userId: user.id }, 'secret_key', { expiresIn: '1h' });
             res.json({ token });
+        });
+    });
+});
+
+// Создание заказа
+app.post('/orders', (req, res) => {
+    const { service, address, contact, date, time, paymentMethod } = req.body;
+    
+    // Получаем токен и проверяем его
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ message: 'Необходима авторизация' });
+    }
+
+    jwt.verify(token, 'secret_key', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Неверный токен' });
+        }
+
+        db.run(`INSERT INTO orders (userId, service, address, contact, date, time, paymentMethod) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [decoded.userId, service, address, contact, date, time, paymentMethod], 
+                function(err) {
+                    if (err) {
+                        return res.status(400).json({ message: err.message });
+                    }
+                    res.status(201).json({ message: 'Заказ создан', id: this.lastID });
+                });
+    });
+});
+
+// Получение истории заказов
+app.get('/orders', (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ message: 'Необходима авторизация' });
+    }
+
+    jwt.verify(token, 'secret_key', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Неверный токен' });
+        }
+
+        db.all(`SELECT * FROM orders WHERE userId = ?`, [decoded.userId], (err, rows) => {
+            if (err) {
+                return res.status(500).json({ message: err.message });
+            }
+            res.json(rows);
         });
     });
 });

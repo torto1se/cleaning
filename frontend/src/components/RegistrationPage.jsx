@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from 'react-router-dom';
-import ErrorMessage from './ErrorMessage'; // Импортируем компонент
+import ErrorMessage from './ErrorMessage'; 
 
 export default function RegistrationPage() {
     const [username, setUsername] = useState('');
@@ -8,7 +8,7 @@ export default function RegistrationPage() {
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(''); // Состояние для ошибок
+    const [error, setError] = useState(''); 
 
     const styles = {
         input: {
@@ -38,15 +38,15 @@ export default function RegistrationPage() {
         const data = await response.json();
         if (response.ok) {
             alert('Регистрация успешна!');
-            setError(''); // Сброс ошибки при успешной регистрации
+            setError('');
         } else {
-            setError(data.error); // Устанавливаем сообщение об ошибке
+            setError(data.error); 
         }
     };
 
     return (
         <div>
-            <ErrorMessage message={error} /> {/* Отображаем сообщение об ошибке */}
+            <ErrorMessage message={error} /> 
             <div style={{width:"100%", justifyContent:"center", display:"flex", alignItems:"center", height:"100vh"}}>
                 <div style={{border: '2px solid black', borderRadius:'10px'}}>
                     <div style={{gap:"2px", display:"flex", flexDirection:"column", width: "300px", margin:'40px', alignItems:'center'} }>

@@ -2,7 +2,7 @@
 import React from 'react';
 
 const ErrorMessage = ({ message }) => {
-    if (!message) return null; // Если нет сообщения, ничего не отображаем
+    if (!message) return null;
 
     return (
         <div style={{

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link } from 'react-router-dom';
-import ErrorMessage from './ErrorMessage'; // Импортируем компонент
+import ErrorMessage from './ErrorMessage'; 
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(''); // Состояние для ошибок
+    const [error, setError] = useState(''); 
 
     const styles = {
         input: {
@@ -22,29 +22,33 @@ export default function LoginPage() {
     const handleLogin = async () => {
         if (!username || !password) {
             setError('Все поля должны быть заполнены');
-            setTimeout(() => setError(''), 5000); // Убираем сообщение об ошибке через 5 секунд
+            setTimeout(() => setError(''), 5000); 
             return;
         }
-
+    
         const response = await fetch('http://localhost:3001/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-
+    
         const data = await response.json();
         if (response.ok) {
+            // Сохраняем токен в localStorage
+            localStorage.setItem('token', data.token);
             alert('Вход успешен! Токен:', data.token);
-            setError(''); // Сброс ошибки при успешном входе
+            setError(''); 
+            // Перенаправляем пользователя на страницу заказа
+            window.location.href = '/order'; // Или используйте history.push если используете react-router
         } else {
-            setError(data.message); // Устанавливаем сообщение об ошибке
-            setTimeout(() => setError(''), 5000); // Убираем сообщение об ошибке через 5 секунд
+            setError(data.message);
+            setTimeout(() => setError(''), 5000); 
         }
     };
 
     return (
         <div>
-            <ErrorMessage message={error} /> {/* Отображаем сообщение об ошибке */}
+            <ErrorMessage message={error} />
             <div style={{width:"100%", justifyContent:"center", display:"flex", alignItems:"center", height:"100vh"}}>
                 <div style={{border: '2px solid black', borderRadius:'10px'}}>
                     <div style={{gap:"2px", display:"flex", flexDirection:"column", width: "300px", margin:'30px', alignItems:'center'} }>
