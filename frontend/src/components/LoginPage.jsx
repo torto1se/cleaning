@@ -48,14 +48,60 @@ export default function LoginPage() {
     return (
         <div>
             <ErrorMessage message={error} />
-            <div style={{width:"100%", justifyContent:"center", display:"flex", alignItems:"center", height:"100vh"}}>
-                <div style={{border: '2px solid black', borderRadius:'10px'}}>
-                    <div style={{gap:"2px", display:"flex", flexDirection:"column", width: "300px", margin:'30px', alignItems:'center'} }>
-                        <h3 style={{textAlign:"center", color:"green", marginBottom:'40px'}}>Авторизация</h3>
+            <div style={{
+                width:"100%", 
+                justifyContent:"center", 
+                display:"flex", 
+                alignItems:"center", 
+                height:"100vh"
+            }}>
+                <div style={{
+                    border: '2px solid black', 
+                    borderRadius:'10px'
+                }}>
+                    <div style={{
+                        gap:"2px", 
+                        display:"flex", 
+                        flexDirection:"column",
+                         width: "300px", 
+                         margin:'30px', 
+                         alignItems:'center'
+                    }}>
+                        <h3 style={{
+                            textAlign:"center", 
+                            color:"green", 
+                            marginBottom:'40px'
+                        }}>
+                            Авторизация
+                        </h3>
                         <input type="text" placeholder="Логин" style={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} />
                         <input type="password" placeholder="Пароль" style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button type="button" onClick={handleLogin} style={{marginTop:"10px", cursor:'pointer', color:'white', backgroundColor:'black', border: 'none', padding:'10px', borderRadius:'10px', width:'180px'}}>Войти</button>
-                        <p style={{textAlign:'center'}}>Нет аккаунта? <Link to="/registration" style={{textDecoration:'none', color:"black"}}> Зарегистрироваться </Link></p>
+                        <button 
+                            type="button" 
+                            onClick={handleLogin} 
+                            style={{
+                                marginTop:"10px", 
+                                cursor:'pointer', 
+                                color:'white', 
+                                backgroundColor:'black', 
+                                border: 'none', 
+                                padding:'10px', 
+                                borderRadius:'10px', 
+                                width:'180px'
+                            }}>
+                                Войти
+                        </button>
+                        <p style={{textAlign:'center'}}>
+                            Нет аккаунта?&nbsp; 
+                            <Link 
+                                to="/registration" 
+                                style={{
+                                    textDecoration:'none', 
+                                    color:"black"
+                            }}> 
+                                Зарегистрироваться 
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
