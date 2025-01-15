@@ -39,6 +39,9 @@ db.run(`CREATE TABLE IF NOT EXISTS orders (
     date TEXT NOT NULL,
     time TEXT NOT NULL,
     paymentMethod TEXT NOT NULL,
+    status TEXT,
+    cancellationReason TEXT,
+    fullname TEXT,
     FOREIGN KEY(userId) REFERENCES users(id)
 )`);
 
@@ -77,11 +80,12 @@ app.post('/login', (req, res) => {
                 return res.status(401).json({ message: 'Неверный логин или пароль' });
             }
 
-            const token = jwt.sign({ userId: user.id }, 'secret_key', { expiresIn: '1h' });
+            const token = jwt.sign({ userId: user.id, username: user.username }, 'secret_key', { expiresIn: '1h' });
             res.json({ token });
         });
     });
 });
+
 
 // Создание заказа
 app.post('/orders', (req, res) => {
@@ -99,16 +103,25 @@ app.post('/orders', (req, res) => {
             return res.status(401).json({ message: 'Неверный токен' });
         }
 
-        db.run(`INSERT INTO orders (userId, service, address, contact, date, time, paymentMethod) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
-                [decoded.userId, service, address, contact, date, time, paymentMethod], 
-                function(err) {
-                    if (err) {
-                        return res.status(400).json({ message: err.message });
-                    }
-                    res.status(201).json({ message: 'Заказ создан', id: this.lastID });
-                });
+        // Сохраняем заказ с ФИО пользователя и статусом по умолчанию
+        db.get(`SELECT fullname FROM users WHERE id = ?`, [decoded.userId], (err, user) => {
+            if (err || !user) {
+                return res.status(404).json({ message: 'Пользователь не найден' });
+            }
+
+            db.run(`INSERT INTO orders (userId, fullname, service, address, contact, date, time, paymentMethod, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                    [decoded.userId, user.fullname, service, address, contact, date, time, paymentMethod, 'В обработке'], 
+                    function(err) {
+                        if (err) {
+                            return res.status(400).json({ message: err.message });
+                        }
+                        res.status(201).json({ message: 'Заказ создан', id: this.lastID });
+                    });
+        });
     });
 });
+
+
 
 // Получение истории заказов
 app.get('/orders', (req, res) => {
@@ -123,14 +136,57 @@ app.get('/orders', (req, res) => {
             return res.status(401).json({ message: 'Неверный токен' });
         }
 
-        db.all(`SELECT * FROM orders WHERE userId = ?`, [decoded.userId], (err, rows) => {
+        // Проверка на пользователя adminka
+        if (decoded.username === 'adminka') {
+            // Если это администратор, возвращаем все заказы
+            db.all(`SELECT * FROM orders`, [], (err, rows) => {
+                if (err) {
+                    return res.status(500).json({ message: err.message });
+                }
+                res.json(rows);
+            });
+        } else {
+            // Если это обычный пользователь, возвращаем только его заказы
+            db.all(`SELECT * FROM orders WHERE userId = ?`, [decoded.userId], (err, rows) => {
+                if (err) {
+                    return res.status(500).json({ message: err.message });
+                }
+                res.json(rows);
+            });
+        }
+    });
+});
+
+
+
+// Обновление статуса заказа
+app.put('/orders/:id', (req, res) => {
+    const { id } = req.params;
+    const { status, cancellationReason } = req.body;
+
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ message: 'Необходима авторизация' });
+    }
+
+    jwt.verify(token, 'secret_key', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Неверный токен' });
+        }
+
+        const query = `UPDATE orders SET status = ?, cancellationReason = ? WHERE id = ?`;
+        db.run(query, [status, status === "Отменен" ? cancellationReason : null, id], function(err) {
             if (err) {
-                return res.status(500).json({ message: err.message });
+                return res.status(400).json({ message: err.message });
             }
-            res.json(rows);
+            res.status(200).json({ message: 'Статус заказа обновлен' });
         });
     });
 });
+
+
+
 
 // Запуск сервера
 app.listen(port, () => {

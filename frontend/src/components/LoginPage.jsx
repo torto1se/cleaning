@@ -34,11 +34,9 @@ export default function LoginPage() {
     
         const data = await response.json();
         if (response.ok) {
-            // Сохраняем токен в localStorage
             localStorage.setItem('token', data.token);
-            setError(''); 
-            // Перенаправляем пользователя на страницу заказа
-            window.location.href = '/order'; // Или используйте history.push если используете react-router
+            setError('');
+            window.location.href = '/order'; 
         } else {
             setError(data.message);
             setTimeout(() => setError(''), 5000); 
