@@ -36,7 +36,6 @@ export default function LoginPage() {
         if (response.ok) {
             // Сохраняем токен в localStorage
             localStorage.setItem('token', data.token);
-            alert('Вход успешен! Токен:', data.token);
             setError(''); 
             // Перенаправляем пользователя на страницу заказа
             window.location.href = '/order'; // Или используйте history.push если используете react-router
